@@ -1,0 +1,24 @@
+services:
+  postgres:
+    build: ./database
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    ports:
+      - "5432:5432"
+  go-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+    links:
+      - postgres
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
