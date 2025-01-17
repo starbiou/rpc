@@ -9,54 +9,55 @@ import (
 )
 
 var (
-	// ItemColumns holds the columns for the "item" table.
-	ItemColumns = []*schema.Column{
+	// ItemsColumns holds the columns for the "items" table.
+	ItemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "short_description", Type: field.TypeString},
-		{Name: "price", Type: field.TypeString},
+		{Name: "price", Type: field.TypeInt},
 		{Name: "receipt_items", Type: field.TypeInt, Nullable: true},
 	}
-	// ItemTable holds the schema information for the "item" table.
-	ItemTable = &schema.Table{
-		Name:       "item",
-		Columns:    ItemColumns,
-		PrimaryKey: []*schema.Column{ItemColumns[0]},
+	// ItemsTable holds the schema information for the "items" table.
+	ItemsTable = &schema.Table{
+		Name:       "items",
+		Columns:    ItemsColumns,
+		PrimaryKey: []*schema.Column{ItemsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "item_receipt_items",
-				Columns:    []*schema.Column{ItemColumns[3]},
-				RefColumns: []*schema.Column{ReceiptColumns[0]},
+				Symbol:     "items_receipts_items",
+				Columns:    []*schema.Column{ItemsColumns[3]},
+				RefColumns: []*schema.Column{ReceiptsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
 	}
-	// ReceiptColumns holds the columns for the "receipt" table.
-	ReceiptColumns = []*schema.Column{
+	// ReceiptsColumns holds the columns for the "receipts" table.
+	ReceiptsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "retailer", Type: field.TypeString},
 		{Name: "purchase_date", Type: field.TypeString},
 		{Name: "purchase_time", Type: field.TypeString},
-		{Name: "total", Type: field.TypeString},
+		{Name: "total", Type: field.TypeInt},
+		{Name: "points", Type: field.TypeInt, Default: 0},
 	}
-	// ReceiptTable holds the schema information for the "receipt" table.
-	ReceiptTable = &schema.Table{
-		Name:       "receipt",
-		Columns:    ReceiptColumns,
-		PrimaryKey: []*schema.Column{ReceiptColumns[0]},
+	// ReceiptsTable holds the schema information for the "receipts" table.
+	ReceiptsTable = &schema.Table{
+		Name:       "receipts",
+		Columns:    ReceiptsColumns,
+		PrimaryKey: []*schema.Column{ReceiptsColumns[0]},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		ItemTable,
-		ReceiptTable,
+		ItemsTable,
+		ReceiptsTable,
 	}
 )
 
 func init() {
-	ItemTable.ForeignKeys[0].RefTable = ReceiptTable
-	ItemTable.Annotation = &entsql.Annotation{
-		Table: "item",
+	ItemsTable.ForeignKeys[0].RefTable = ReceiptsTable
+	ItemsTable.Annotation = &entsql.Annotation{
+		Table: "items",
 	}
-	ReceiptTable.Annotation = &entsql.Annotation{
-		Table: "receipt",
+	ReceiptsTable.Annotation = &entsql.Annotation{
+		Table: "receipts",
 	}
 }

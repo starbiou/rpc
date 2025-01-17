@@ -16,17 +16,17 @@ const (
 	FieldShortDescription = "short_description"
 	// FieldPrice holds the string denoting the price field in the database.
 	FieldPrice = "price"
-	// EdgeReceipt holds the string denoting the receipt edge name in mutations.
-	EdgeReceipt = "receipt"
+	// EdgeReceipts holds the string denoting the receipts edge name in mutations.
+	EdgeReceipts = "receipts"
 	// Table holds the table name of the item in the database.
-	Table = "item"
-	// ReceiptTable is the table that holds the receipt relation/edge.
-	ReceiptTable = "item"
-	// ReceiptInverseTable is the table name for the Receipt entity.
+	Table = "items"
+	// ReceiptsTable is the table that holds the receipts relation/edge.
+	ReceiptsTable = "items"
+	// ReceiptsInverseTable is the table name for the Receipt entity.
 	// It exists in this package in order to avoid circular dependency with the "receipt" package.
-	ReceiptInverseTable = "receipt"
-	// ReceiptColumn is the table column denoting the receipt relation/edge.
-	ReceiptColumn = "receipt_items"
+	ReceiptsInverseTable = "receipts"
+	// ReceiptsColumn is the table column denoting the receipts relation/edge.
+	ReceiptsColumn = "receipt_items"
 )
 
 // Columns holds all SQL columns for item fields.
@@ -36,7 +36,7 @@ var Columns = []string{
 	FieldPrice,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "item"
+// ForeignKeys holds the SQL foreign-keys that are owned by the "items"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"receipt_items",
@@ -61,7 +61,7 @@ var (
 	// ShortDescriptionValidator is a validator for the "short_description" field. It is called by the builders before save.
 	ShortDescriptionValidator func(string) error
 	// PriceValidator is a validator for the "price" field. It is called by the builders before save.
-	PriceValidator func(string) error
+	PriceValidator func(int) error
 )
 
 // OrderOption defines the ordering options for the Item queries.
@@ -82,16 +82,16 @@ func ByPrice(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPrice, opts...).ToFunc()
 }
 
-// ByReceiptField orders the results by receipt field.
-func ByReceiptField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByReceiptsField orders the results by receipts field.
+func ByReceiptsField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newReceiptStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newReceiptsStep(), sql.OrderByField(field, opts...))
 	}
 }
-func newReceiptStep() *sqlgraph.Step {
+func newReceiptsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ReceiptInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, ReceiptTable, ReceiptColumn),
+		sqlgraph.To(ReceiptsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ReceiptsTable, ReceiptsColumn),
 	)
 }

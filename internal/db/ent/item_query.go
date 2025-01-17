@@ -19,12 +19,12 @@ import (
 // ItemQuery is the builder for querying Item entities.
 type ItemQuery struct {
 	config
-	ctx         *QueryContext
-	order       []item.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.Item
-	withReceipt *ReceiptQuery
-	withFKs     bool
+	ctx          *QueryContext
+	order        []item.OrderOption
+	inters       []Interceptor
+	predicates   []predicate.Item
+	withReceipts *ReceiptQuery
+	withFKs      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -61,8 +61,8 @@ func (iq *ItemQuery) Order(o ...item.OrderOption) *ItemQuery {
 	return iq
 }
 
-// QueryReceipt chains the current query on the "receipt" edge.
-func (iq *ItemQuery) QueryReceipt() *ReceiptQuery {
+// QueryReceipts chains the current query on the "receipts" edge.
+func (iq *ItemQuery) QueryReceipts() *ReceiptQuery {
 	query := (&ReceiptClient{config: iq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := iq.prepareQuery(ctx); err != nil {
@@ -75,7 +75,7 @@ func (iq *ItemQuery) QueryReceipt() *ReceiptQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(item.Table, item.FieldID, selector),
 			sqlgraph.To(receipt.Table, receipt.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, item.ReceiptTable, item.ReceiptColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, item.ReceiptsTable, item.ReceiptsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
 		return fromU, nil
@@ -270,26 +270,26 @@ func (iq *ItemQuery) Clone() *ItemQuery {
 		return nil
 	}
 	return &ItemQuery{
-		config:      iq.config,
-		ctx:         iq.ctx.Clone(),
-		order:       append([]item.OrderOption{}, iq.order...),
-		inters:      append([]Interceptor{}, iq.inters...),
-		predicates:  append([]predicate.Item{}, iq.predicates...),
-		withReceipt: iq.withReceipt.Clone(),
+		config:       iq.config,
+		ctx:          iq.ctx.Clone(),
+		order:        append([]item.OrderOption{}, iq.order...),
+		inters:       append([]Interceptor{}, iq.inters...),
+		predicates:   append([]predicate.Item{}, iq.predicates...),
+		withReceipts: iq.withReceipts.Clone(),
 		// clone intermediate query.
 		sql:  iq.sql.Clone(),
 		path: iq.path,
 	}
 }
 
-// WithReceipt tells the query-builder to eager-load the nodes that are connected to
-// the "receipt" edge. The optional arguments are used to configure the query builder of the edge.
-func (iq *ItemQuery) WithReceipt(opts ...func(*ReceiptQuery)) *ItemQuery {
+// WithReceipts tells the query-builder to eager-load the nodes that are connected to
+// the "receipts" edge. The optional arguments are used to configure the query builder of the edge.
+func (iq *ItemQuery) WithReceipts(opts ...func(*ReceiptQuery)) *ItemQuery {
 	query := (&ReceiptClient{config: iq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	iq.withReceipt = query
+	iq.withReceipts = query
 	return iq
 }
 
@@ -373,10 +373,10 @@ func (iq *ItemQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Item, e
 		withFKs     = iq.withFKs
 		_spec       = iq.querySpec()
 		loadedTypes = [1]bool{
-			iq.withReceipt != nil,
+			iq.withReceipts != nil,
 		}
 	)
-	if iq.withReceipt != nil {
+	if iq.withReceipts != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -400,16 +400,16 @@ func (iq *ItemQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Item, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := iq.withReceipt; query != nil {
-		if err := iq.loadReceipt(ctx, query, nodes, nil,
-			func(n *Item, e *Receipt) { n.Edges.Receipt = e }); err != nil {
+	if query := iq.withReceipts; query != nil {
+		if err := iq.loadReceipts(ctx, query, nodes, nil,
+			func(n *Item, e *Receipt) { n.Edges.Receipts = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (iq *ItemQuery) loadReceipt(ctx context.Context, query *ReceiptQuery, nodes []*Item, init func(*Item), assign func(*Item, *Receipt)) error {
+func (iq *ItemQuery) loadReceipts(ctx context.Context, query *ReceiptQuery, nodes []*Item, init func(*Item), assign func(*Item, *Receipt)) error {
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Item)
 	for i := range nodes {

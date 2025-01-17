@@ -35,10 +35,11 @@ type ItemMutation struct {
 	typ               string
 	id                *int
 	short_description *string
-	price             *string
+	price             *int
+	addprice          *int
 	clearedFields     map[string]struct{}
-	receipt           *int
-	clearedreceipt    bool
+	receipts          *int
+	clearedreceipts   bool
 	done              bool
 	oldValue          func(context.Context) (*Item, error)
 	predicates        []predicate.Item
@@ -179,12 +180,13 @@ func (m *ItemMutation) ResetShortDescription() {
 }
 
 // SetPrice sets the "price" field.
-func (m *ItemMutation) SetPrice(s string) {
-	m.price = &s
+func (m *ItemMutation) SetPrice(i int) {
+	m.price = &i
+	m.addprice = nil
 }
 
 // Price returns the value of the "price" field in the mutation.
-func (m *ItemMutation) Price() (r string, exists bool) {
+func (m *ItemMutation) Price() (r int, exists bool) {
 	v := m.price
 	if v == nil {
 		return
@@ -195,7 +197,7 @@ func (m *ItemMutation) Price() (r string, exists bool) {
 // OldPrice returns the old "price" field's value of the Item entity.
 // If the Item object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ItemMutation) OldPrice(ctx context.Context) (v string, err error) {
+func (m *ItemMutation) OldPrice(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPrice is only allowed on UpdateOne operations")
 	}
@@ -209,48 +211,67 @@ func (m *ItemMutation) OldPrice(ctx context.Context) (v string, err error) {
 	return oldValue.Price, nil
 }
 
+// AddPrice adds i to the "price" field.
+func (m *ItemMutation) AddPrice(i int) {
+	if m.addprice != nil {
+		*m.addprice += i
+	} else {
+		m.addprice = &i
+	}
+}
+
+// AddedPrice returns the value that was added to the "price" field in this mutation.
+func (m *ItemMutation) AddedPrice() (r int, exists bool) {
+	v := m.addprice
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
 // ResetPrice resets all changes to the "price" field.
 func (m *ItemMutation) ResetPrice() {
 	m.price = nil
+	m.addprice = nil
 }
 
-// SetReceiptID sets the "receipt" edge to the Receipt entity by id.
-func (m *ItemMutation) SetReceiptID(id int) {
-	m.receipt = &id
+// SetReceiptsID sets the "receipts" edge to the Receipt entity by id.
+func (m *ItemMutation) SetReceiptsID(id int) {
+	m.receipts = &id
 }
 
-// ClearReceipt clears the "receipt" edge to the Receipt entity.
-func (m *ItemMutation) ClearReceipt() {
-	m.clearedreceipt = true
+// ClearReceipts clears the "receipts" edge to the Receipt entity.
+func (m *ItemMutation) ClearReceipts() {
+	m.clearedreceipts = true
 }
 
-// ReceiptCleared reports if the "receipt" edge to the Receipt entity was cleared.
-func (m *ItemMutation) ReceiptCleared() bool {
-	return m.clearedreceipt
+// ReceiptsCleared reports if the "receipts" edge to the Receipt entity was cleared.
+func (m *ItemMutation) ReceiptsCleared() bool {
+	return m.clearedreceipts
 }
 
-// ReceiptID returns the "receipt" edge ID in the mutation.
-func (m *ItemMutation) ReceiptID() (id int, exists bool) {
-	if m.receipt != nil {
-		return *m.receipt, true
+// ReceiptsID returns the "receipts" edge ID in the mutation.
+func (m *ItemMutation) ReceiptsID() (id int, exists bool) {
+	if m.receipts != nil {
+		return *m.receipts, true
 	}
 	return
 }
 
-// ReceiptIDs returns the "receipt" edge IDs in the mutation.
+// ReceiptsIDs returns the "receipts" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// ReceiptID instead. It exists only for internal usage by the builders.
-func (m *ItemMutation) ReceiptIDs() (ids []int) {
-	if id := m.receipt; id != nil {
+// ReceiptsID instead. It exists only for internal usage by the builders.
+func (m *ItemMutation) ReceiptsIDs() (ids []int) {
+	if id := m.receipts; id != nil {
 		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetReceipt resets all changes to the "receipt" edge.
-func (m *ItemMutation) ResetReceipt() {
-	m.receipt = nil
-	m.clearedreceipt = false
+// ResetReceipts resets all changes to the "receipts" edge.
+func (m *ItemMutation) ResetReceipts() {
+	m.receipts = nil
+	m.clearedreceipts = false
 }
 
 // Where appends a list predicates to the ItemMutation builder.
@@ -336,7 +357,7 @@ func (m *ItemMutation) SetField(name string, value ent.Value) error {
 		m.SetShortDescription(v)
 		return nil
 	case item.FieldPrice:
-		v, ok := value.(string)
+		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -349,13 +370,21 @@ func (m *ItemMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *ItemMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addprice != nil {
+		fields = append(fields, item.FieldPrice)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *ItemMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case item.FieldPrice:
+		return m.AddedPrice()
+	}
 	return nil, false
 }
 
@@ -364,6 +393,13 @@ func (m *ItemMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *ItemMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case item.FieldPrice:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPrice(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Item numeric field %s", name)
 }
@@ -404,8 +440,8 @@ func (m *ItemMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ItemMutation) AddedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.receipt != nil {
-		edges = append(edges, item.EdgeReceipt)
+	if m.receipts != nil {
+		edges = append(edges, item.EdgeReceipts)
 	}
 	return edges
 }
@@ -414,8 +450,8 @@ func (m *ItemMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *ItemMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case item.EdgeReceipt:
-		if id := m.receipt; id != nil {
+	case item.EdgeReceipts:
+		if id := m.receipts; id != nil {
 			return []ent.Value{*id}
 		}
 	}
@@ -437,8 +473,8 @@ func (m *ItemMutation) RemovedIDs(name string) []ent.Value {
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ItemMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.clearedreceipt {
-		edges = append(edges, item.EdgeReceipt)
+	if m.clearedreceipts {
+		edges = append(edges, item.EdgeReceipts)
 	}
 	return edges
 }
@@ -447,8 +483,8 @@ func (m *ItemMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *ItemMutation) EdgeCleared(name string) bool {
 	switch name {
-	case item.EdgeReceipt:
-		return m.clearedreceipt
+	case item.EdgeReceipts:
+		return m.clearedreceipts
 	}
 	return false
 }
@@ -457,8 +493,8 @@ func (m *ItemMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *ItemMutation) ClearEdge(name string) error {
 	switch name {
-	case item.EdgeReceipt:
-		m.ClearReceipt()
+	case item.EdgeReceipts:
+		m.ClearReceipts()
 		return nil
 	}
 	return fmt.Errorf("unknown Item unique edge %s", name)
@@ -468,8 +504,8 @@ func (m *ItemMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *ItemMutation) ResetEdge(name string) error {
 	switch name {
-	case item.EdgeReceipt:
-		m.ResetReceipt()
+	case item.EdgeReceipts:
+		m.ResetReceipts()
 		return nil
 	}
 	return fmt.Errorf("unknown Item edge %s", name)
@@ -484,7 +520,10 @@ type ReceiptMutation struct {
 	retailer      *string
 	purchase_date *string
 	purchase_time *string
-	total         *string
+	total         *int
+	addtotal      *int
+	points        *int
+	addpoints     *int
 	clearedFields map[string]struct{}
 	items         map[int]struct{}
 	removeditems  map[int]struct{}
@@ -701,12 +740,13 @@ func (m *ReceiptMutation) ResetPurchaseTime() {
 }
 
 // SetTotal sets the "total" field.
-func (m *ReceiptMutation) SetTotal(s string) {
-	m.total = &s
+func (m *ReceiptMutation) SetTotal(i int) {
+	m.total = &i
+	m.addtotal = nil
 }
 
 // Total returns the value of the "total" field in the mutation.
-func (m *ReceiptMutation) Total() (r string, exists bool) {
+func (m *ReceiptMutation) Total() (r int, exists bool) {
 	v := m.total
 	if v == nil {
 		return
@@ -717,7 +757,7 @@ func (m *ReceiptMutation) Total() (r string, exists bool) {
 // OldTotal returns the old "total" field's value of the Receipt entity.
 // If the Receipt object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ReceiptMutation) OldTotal(ctx context.Context) (v string, err error) {
+func (m *ReceiptMutation) OldTotal(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTotal is only allowed on UpdateOne operations")
 	}
@@ -731,9 +771,84 @@ func (m *ReceiptMutation) OldTotal(ctx context.Context) (v string, err error) {
 	return oldValue.Total, nil
 }
 
+// AddTotal adds i to the "total" field.
+func (m *ReceiptMutation) AddTotal(i int) {
+	if m.addtotal != nil {
+		*m.addtotal += i
+	} else {
+		m.addtotal = &i
+	}
+}
+
+// AddedTotal returns the value that was added to the "total" field in this mutation.
+func (m *ReceiptMutation) AddedTotal() (r int, exists bool) {
+	v := m.addtotal
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
 // ResetTotal resets all changes to the "total" field.
 func (m *ReceiptMutation) ResetTotal() {
 	m.total = nil
+	m.addtotal = nil
+}
+
+// SetPoints sets the "points" field.
+func (m *ReceiptMutation) SetPoints(i int) {
+	m.points = &i
+	m.addpoints = nil
+}
+
+// Points returns the value of the "points" field in the mutation.
+func (m *ReceiptMutation) Points() (r int, exists bool) {
+	v := m.points
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPoints returns the old "points" field's value of the Receipt entity.
+// If the Receipt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReceiptMutation) OldPoints(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPoints is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPoints requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPoints: %w", err)
+	}
+	return oldValue.Points, nil
+}
+
+// AddPoints adds i to the "points" field.
+func (m *ReceiptMutation) AddPoints(i int) {
+	if m.addpoints != nil {
+		*m.addpoints += i
+	} else {
+		m.addpoints = &i
+	}
+}
+
+// AddedPoints returns the value that was added to the "points" field in this mutation.
+func (m *ReceiptMutation) AddedPoints() (r int, exists bool) {
+	v := m.addpoints
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPoints resets all changes to the "points" field.
+func (m *ReceiptMutation) ResetPoints() {
+	m.points = nil
+	m.addpoints = nil
 }
 
 // AddItemIDs adds the "items" edge to the Item entity by ids.
@@ -824,7 +939,7 @@ func (m *ReceiptMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ReceiptMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.retailer != nil {
 		fields = append(fields, receipt.FieldRetailer)
 	}
@@ -836,6 +951,9 @@ func (m *ReceiptMutation) Fields() []string {
 	}
 	if m.total != nil {
 		fields = append(fields, receipt.FieldTotal)
+	}
+	if m.points != nil {
+		fields = append(fields, receipt.FieldPoints)
 	}
 	return fields
 }
@@ -853,6 +971,8 @@ func (m *ReceiptMutation) Field(name string) (ent.Value, bool) {
 		return m.PurchaseTime()
 	case receipt.FieldTotal:
 		return m.Total()
+	case receipt.FieldPoints:
+		return m.Points()
 	}
 	return nil, false
 }
@@ -870,6 +990,8 @@ func (m *ReceiptMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldPurchaseTime(ctx)
 	case receipt.FieldTotal:
 		return m.OldTotal(ctx)
+	case receipt.FieldPoints:
+		return m.OldPoints(ctx)
 	}
 	return nil, fmt.Errorf("unknown Receipt field %s", name)
 }
@@ -901,11 +1023,18 @@ func (m *ReceiptMutation) SetField(name string, value ent.Value) error {
 		m.SetPurchaseTime(v)
 		return nil
 	case receipt.FieldTotal:
-		v, ok := value.(string)
+		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTotal(v)
+		return nil
+	case receipt.FieldPoints:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPoints(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Receipt field %s", name)
@@ -914,13 +1043,26 @@ func (m *ReceiptMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *ReceiptMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addtotal != nil {
+		fields = append(fields, receipt.FieldTotal)
+	}
+	if m.addpoints != nil {
+		fields = append(fields, receipt.FieldPoints)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *ReceiptMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case receipt.FieldTotal:
+		return m.AddedTotal()
+	case receipt.FieldPoints:
+		return m.AddedPoints()
+	}
 	return nil, false
 }
 
@@ -929,6 +1071,20 @@ func (m *ReceiptMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *ReceiptMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case receipt.FieldTotal:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTotal(v)
+		return nil
+	case receipt.FieldPoints:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPoints(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Receipt numeric field %s", name)
 }
@@ -967,6 +1123,9 @@ func (m *ReceiptMutation) ResetField(name string) error {
 		return nil
 	case receipt.FieldTotal:
 		m.ResetTotal()
+		return nil
+	case receipt.FieldPoints:
+		m.ResetPoints()
 		return nil
 	}
 	return fmt.Errorf("unknown Receipt field %s", name)

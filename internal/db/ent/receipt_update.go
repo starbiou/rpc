@@ -71,16 +71,44 @@ func (ru *ReceiptUpdate) SetNillablePurchaseTime(s *string) *ReceiptUpdate {
 }
 
 // SetTotal sets the "total" field.
-func (ru *ReceiptUpdate) SetTotal(s string) *ReceiptUpdate {
-	ru.mutation.SetTotal(s)
+func (ru *ReceiptUpdate) SetTotal(i int) *ReceiptUpdate {
+	ru.mutation.ResetTotal()
+	ru.mutation.SetTotal(i)
 	return ru
 }
 
 // SetNillableTotal sets the "total" field if the given value is not nil.
-func (ru *ReceiptUpdate) SetNillableTotal(s *string) *ReceiptUpdate {
-	if s != nil {
-		ru.SetTotal(*s)
+func (ru *ReceiptUpdate) SetNillableTotal(i *int) *ReceiptUpdate {
+	if i != nil {
+		ru.SetTotal(*i)
 	}
+	return ru
+}
+
+// AddTotal adds i to the "total" field.
+func (ru *ReceiptUpdate) AddTotal(i int) *ReceiptUpdate {
+	ru.mutation.AddTotal(i)
+	return ru
+}
+
+// SetPoints sets the "points" field.
+func (ru *ReceiptUpdate) SetPoints(i int) *ReceiptUpdate {
+	ru.mutation.ResetPoints()
+	ru.mutation.SetPoints(i)
+	return ru
+}
+
+// SetNillablePoints sets the "points" field if the given value is not nil.
+func (ru *ReceiptUpdate) SetNillablePoints(i *int) *ReceiptUpdate {
+	if i != nil {
+		ru.SetPoints(*i)
+	}
+	return ru
+}
+
+// AddPoints adds i to the "points" field.
+func (ru *ReceiptUpdate) AddPoints(i int) *ReceiptUpdate {
+	ru.mutation.AddPoints(i)
 	return ru
 }
 
@@ -199,7 +227,16 @@ func (ru *ReceiptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(receipt.FieldPurchaseTime, field.TypeString, value)
 	}
 	if value, ok := ru.mutation.Total(); ok {
-		_spec.SetField(receipt.FieldTotal, field.TypeString, value)
+		_spec.SetField(receipt.FieldTotal, field.TypeInt, value)
+	}
+	if value, ok := ru.mutation.AddedTotal(); ok {
+		_spec.AddField(receipt.FieldTotal, field.TypeInt, value)
+	}
+	if value, ok := ru.mutation.Points(); ok {
+		_spec.SetField(receipt.FieldPoints, field.TypeInt, value)
+	}
+	if value, ok := ru.mutation.AddedPoints(); ok {
+		_spec.AddField(receipt.FieldPoints, field.TypeInt, value)
 	}
 	if ru.mutation.ItemsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -309,16 +346,44 @@ func (ruo *ReceiptUpdateOne) SetNillablePurchaseTime(s *string) *ReceiptUpdateOn
 }
 
 // SetTotal sets the "total" field.
-func (ruo *ReceiptUpdateOne) SetTotal(s string) *ReceiptUpdateOne {
-	ruo.mutation.SetTotal(s)
+func (ruo *ReceiptUpdateOne) SetTotal(i int) *ReceiptUpdateOne {
+	ruo.mutation.ResetTotal()
+	ruo.mutation.SetTotal(i)
 	return ruo
 }
 
 // SetNillableTotal sets the "total" field if the given value is not nil.
-func (ruo *ReceiptUpdateOne) SetNillableTotal(s *string) *ReceiptUpdateOne {
-	if s != nil {
-		ruo.SetTotal(*s)
+func (ruo *ReceiptUpdateOne) SetNillableTotal(i *int) *ReceiptUpdateOne {
+	if i != nil {
+		ruo.SetTotal(*i)
 	}
+	return ruo
+}
+
+// AddTotal adds i to the "total" field.
+func (ruo *ReceiptUpdateOne) AddTotal(i int) *ReceiptUpdateOne {
+	ruo.mutation.AddTotal(i)
+	return ruo
+}
+
+// SetPoints sets the "points" field.
+func (ruo *ReceiptUpdateOne) SetPoints(i int) *ReceiptUpdateOne {
+	ruo.mutation.ResetPoints()
+	ruo.mutation.SetPoints(i)
+	return ruo
+}
+
+// SetNillablePoints sets the "points" field if the given value is not nil.
+func (ruo *ReceiptUpdateOne) SetNillablePoints(i *int) *ReceiptUpdateOne {
+	if i != nil {
+		ruo.SetPoints(*i)
+	}
+	return ruo
+}
+
+// AddPoints adds i to the "points" field.
+func (ruo *ReceiptUpdateOne) AddPoints(i int) *ReceiptUpdateOne {
+	ruo.mutation.AddPoints(i)
 	return ruo
 }
 
@@ -467,7 +532,16 @@ func (ruo *ReceiptUpdateOne) sqlSave(ctx context.Context) (_node *Receipt, err e
 		_spec.SetField(receipt.FieldPurchaseTime, field.TypeString, value)
 	}
 	if value, ok := ruo.mutation.Total(); ok {
-		_spec.SetField(receipt.FieldTotal, field.TypeString, value)
+		_spec.SetField(receipt.FieldTotal, field.TypeInt, value)
+	}
+	if value, ok := ruo.mutation.AddedTotal(); ok {
+		_spec.AddField(receipt.FieldTotal, field.TypeInt, value)
+	}
+	if value, ok := ruo.mutation.Points(); ok {
+		_spec.SetField(receipt.FieldPoints, field.TypeInt, value)
+	}
+	if value, ok := ruo.mutation.AddedPoints(); ok {
+		_spec.AddField(receipt.FieldPoints, field.TypeInt, value)
 	}
 	if ruo.mutation.ItemsCleared() {
 		edge := &sqlgraph.EdgeSpec{

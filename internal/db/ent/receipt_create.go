@@ -39,8 +39,22 @@ func (rc *ReceiptCreate) SetPurchaseTime(s string) *ReceiptCreate {
 }
 
 // SetTotal sets the "total" field.
-func (rc *ReceiptCreate) SetTotal(s string) *ReceiptCreate {
-	rc.mutation.SetTotal(s)
+func (rc *ReceiptCreate) SetTotal(i int) *ReceiptCreate {
+	rc.mutation.SetTotal(i)
+	return rc
+}
+
+// SetPoints sets the "points" field.
+func (rc *ReceiptCreate) SetPoints(i int) *ReceiptCreate {
+	rc.mutation.SetPoints(i)
+	return rc
+}
+
+// SetNillablePoints sets the "points" field if the given value is not nil.
+func (rc *ReceiptCreate) SetNillablePoints(i *int) *ReceiptCreate {
+	if i != nil {
+		rc.SetPoints(*i)
+	}
 	return rc
 }
 
@@ -66,6 +80,7 @@ func (rc *ReceiptCreate) Mutation() *ReceiptMutation {
 
 // Save creates the Receipt in the database.
 func (rc *ReceiptCreate) Save(ctx context.Context) (*Receipt, error) {
+	rc.defaults()
 	return withHooks(ctx, rc.sqlSave, rc.mutation, rc.hooks)
 }
 
@@ -88,6 +103,14 @@ func (rc *ReceiptCreate) Exec(ctx context.Context) error {
 func (rc *ReceiptCreate) ExecX(ctx context.Context) {
 	if err := rc.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (rc *ReceiptCreate) defaults() {
+	if _, ok := rc.mutation.Points(); !ok {
+		v := receipt.DefaultPoints
+		rc.mutation.SetPoints(v)
 	}
 }
 
@@ -124,6 +147,9 @@ func (rc *ReceiptCreate) check() error {
 		if err := receipt.TotalValidator(v); err != nil {
 			return &ValidationError{Name: "total", err: fmt.Errorf(`ent: validator failed for field "Receipt.total": %w`, err)}
 		}
+	}
+	if _, ok := rc.mutation.Points(); !ok {
+		return &ValidationError{Name: "points", err: errors.New(`ent: missing required field "Receipt.points"`)}
 	}
 	return nil
 }
@@ -164,8 +190,12 @@ func (rc *ReceiptCreate) createSpec() (*Receipt, *sqlgraph.CreateSpec) {
 		_node.PurchaseTime = value
 	}
 	if value, ok := rc.mutation.Total(); ok {
-		_spec.SetField(receipt.FieldTotal, field.TypeString, value)
+		_spec.SetField(receipt.FieldTotal, field.TypeInt, value)
 		_node.Total = value
+	}
+	if value, ok := rc.mutation.Points(); ok {
+		_spec.SetField(receipt.FieldPoints, field.TypeInt, value)
+		_node.Points = value
 	}
 	if nodes := rc.mutation.ItemsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -204,6 +234,7 @@ func (rcb *ReceiptCreateBulk) Save(ctx context.Context) ([]*Receipt, error) {
 	for i := range rcb.builders {
 		func(i int, root context.Context) {
 			builder := rcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*ReceiptMutation)
 				if !ok {

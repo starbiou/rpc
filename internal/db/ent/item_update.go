@@ -43,36 +43,43 @@ func (iu *ItemUpdate) SetNillableShortDescription(s *string) *ItemUpdate {
 }
 
 // SetPrice sets the "price" field.
-func (iu *ItemUpdate) SetPrice(s string) *ItemUpdate {
-	iu.mutation.SetPrice(s)
+func (iu *ItemUpdate) SetPrice(i int) *ItemUpdate {
+	iu.mutation.ResetPrice()
+	iu.mutation.SetPrice(i)
 	return iu
 }
 
 // SetNillablePrice sets the "price" field if the given value is not nil.
-func (iu *ItemUpdate) SetNillablePrice(s *string) *ItemUpdate {
-	if s != nil {
-		iu.SetPrice(*s)
+func (iu *ItemUpdate) SetNillablePrice(i *int) *ItemUpdate {
+	if i != nil {
+		iu.SetPrice(*i)
 	}
 	return iu
 }
 
-// SetReceiptID sets the "receipt" edge to the Receipt entity by ID.
-func (iu *ItemUpdate) SetReceiptID(id int) *ItemUpdate {
-	iu.mutation.SetReceiptID(id)
+// AddPrice adds i to the "price" field.
+func (iu *ItemUpdate) AddPrice(i int) *ItemUpdate {
+	iu.mutation.AddPrice(i)
 	return iu
 }
 
-// SetNillableReceiptID sets the "receipt" edge to the Receipt entity by ID if the given value is not nil.
-func (iu *ItemUpdate) SetNillableReceiptID(id *int) *ItemUpdate {
+// SetReceiptsID sets the "receipts" edge to the Receipt entity by ID.
+func (iu *ItemUpdate) SetReceiptsID(id int) *ItemUpdate {
+	iu.mutation.SetReceiptsID(id)
+	return iu
+}
+
+// SetNillableReceiptsID sets the "receipts" edge to the Receipt entity by ID if the given value is not nil.
+func (iu *ItemUpdate) SetNillableReceiptsID(id *int) *ItemUpdate {
 	if id != nil {
-		iu = iu.SetReceiptID(*id)
+		iu = iu.SetReceiptsID(*id)
 	}
 	return iu
 }
 
-// SetReceipt sets the "receipt" edge to the Receipt entity.
-func (iu *ItemUpdate) SetReceipt(r *Receipt) *ItemUpdate {
-	return iu.SetReceiptID(r.ID)
+// SetReceipts sets the "receipts" edge to the Receipt entity.
+func (iu *ItemUpdate) SetReceipts(r *Receipt) *ItemUpdate {
+	return iu.SetReceiptsID(r.ID)
 }
 
 // Mutation returns the ItemMutation object of the builder.
@@ -80,9 +87,9 @@ func (iu *ItemUpdate) Mutation() *ItemMutation {
 	return iu.mutation
 }
 
-// ClearReceipt clears the "receipt" edge to the Receipt entity.
-func (iu *ItemUpdate) ClearReceipt() *ItemUpdate {
-	iu.mutation.ClearReceipt()
+// ClearReceipts clears the "receipts" edge to the Receipt entity.
+func (iu *ItemUpdate) ClearReceipts() *ItemUpdate {
+	iu.mutation.ClearReceipts()
 	return iu
 }
 
@@ -144,14 +151,17 @@ func (iu *ItemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(item.FieldShortDescription, field.TypeString, value)
 	}
 	if value, ok := iu.mutation.Price(); ok {
-		_spec.SetField(item.FieldPrice, field.TypeString, value)
+		_spec.SetField(item.FieldPrice, field.TypeInt, value)
 	}
-	if iu.mutation.ReceiptCleared() {
+	if value, ok := iu.mutation.AddedPrice(); ok {
+		_spec.AddField(item.FieldPrice, field.TypeInt, value)
+	}
+	if iu.mutation.ReceiptsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   item.ReceiptTable,
-			Columns: []string{item.ReceiptColumn},
+			Table:   item.ReceiptsTable,
+			Columns: []string{item.ReceiptsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(receipt.FieldID, field.TypeInt),
@@ -159,12 +169,12 @@ func (iu *ItemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := iu.mutation.ReceiptIDs(); len(nodes) > 0 {
+	if nodes := iu.mutation.ReceiptsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   item.ReceiptTable,
-			Columns: []string{item.ReceiptColumn},
+			Table:   item.ReceiptsTable,
+			Columns: []string{item.ReceiptsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(receipt.FieldID, field.TypeInt),
@@ -210,36 +220,43 @@ func (iuo *ItemUpdateOne) SetNillableShortDescription(s *string) *ItemUpdateOne 
 }
 
 // SetPrice sets the "price" field.
-func (iuo *ItemUpdateOne) SetPrice(s string) *ItemUpdateOne {
-	iuo.mutation.SetPrice(s)
+func (iuo *ItemUpdateOne) SetPrice(i int) *ItemUpdateOne {
+	iuo.mutation.ResetPrice()
+	iuo.mutation.SetPrice(i)
 	return iuo
 }
 
 // SetNillablePrice sets the "price" field if the given value is not nil.
-func (iuo *ItemUpdateOne) SetNillablePrice(s *string) *ItemUpdateOne {
-	if s != nil {
-		iuo.SetPrice(*s)
+func (iuo *ItemUpdateOne) SetNillablePrice(i *int) *ItemUpdateOne {
+	if i != nil {
+		iuo.SetPrice(*i)
 	}
 	return iuo
 }
 
-// SetReceiptID sets the "receipt" edge to the Receipt entity by ID.
-func (iuo *ItemUpdateOne) SetReceiptID(id int) *ItemUpdateOne {
-	iuo.mutation.SetReceiptID(id)
+// AddPrice adds i to the "price" field.
+func (iuo *ItemUpdateOne) AddPrice(i int) *ItemUpdateOne {
+	iuo.mutation.AddPrice(i)
 	return iuo
 }
 
-// SetNillableReceiptID sets the "receipt" edge to the Receipt entity by ID if the given value is not nil.
-func (iuo *ItemUpdateOne) SetNillableReceiptID(id *int) *ItemUpdateOne {
+// SetReceiptsID sets the "receipts" edge to the Receipt entity by ID.
+func (iuo *ItemUpdateOne) SetReceiptsID(id int) *ItemUpdateOne {
+	iuo.mutation.SetReceiptsID(id)
+	return iuo
+}
+
+// SetNillableReceiptsID sets the "receipts" edge to the Receipt entity by ID if the given value is not nil.
+func (iuo *ItemUpdateOne) SetNillableReceiptsID(id *int) *ItemUpdateOne {
 	if id != nil {
-		iuo = iuo.SetReceiptID(*id)
+		iuo = iuo.SetReceiptsID(*id)
 	}
 	return iuo
 }
 
-// SetReceipt sets the "receipt" edge to the Receipt entity.
-func (iuo *ItemUpdateOne) SetReceipt(r *Receipt) *ItemUpdateOne {
-	return iuo.SetReceiptID(r.ID)
+// SetReceipts sets the "receipts" edge to the Receipt entity.
+func (iuo *ItemUpdateOne) SetReceipts(r *Receipt) *ItemUpdateOne {
+	return iuo.SetReceiptsID(r.ID)
 }
 
 // Mutation returns the ItemMutation object of the builder.
@@ -247,9 +264,9 @@ func (iuo *ItemUpdateOne) Mutation() *ItemMutation {
 	return iuo.mutation
 }
 
-// ClearReceipt clears the "receipt" edge to the Receipt entity.
-func (iuo *ItemUpdateOne) ClearReceipt() *ItemUpdateOne {
-	iuo.mutation.ClearReceipt()
+// ClearReceipts clears the "receipts" edge to the Receipt entity.
+func (iuo *ItemUpdateOne) ClearReceipts() *ItemUpdateOne {
+	iuo.mutation.ClearReceipts()
 	return iuo
 }
 
@@ -341,14 +358,17 @@ func (iuo *ItemUpdateOne) sqlSave(ctx context.Context) (_node *Item, err error) 
 		_spec.SetField(item.FieldShortDescription, field.TypeString, value)
 	}
 	if value, ok := iuo.mutation.Price(); ok {
-		_spec.SetField(item.FieldPrice, field.TypeString, value)
+		_spec.SetField(item.FieldPrice, field.TypeInt, value)
 	}
-	if iuo.mutation.ReceiptCleared() {
+	if value, ok := iuo.mutation.AddedPrice(); ok {
+		_spec.AddField(item.FieldPrice, field.TypeInt, value)
+	}
+	if iuo.mutation.ReceiptsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   item.ReceiptTable,
-			Columns: []string{item.ReceiptColumn},
+			Table:   item.ReceiptsTable,
+			Columns: []string{item.ReceiptsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(receipt.FieldID, field.TypeInt),
@@ -356,12 +376,12 @@ func (iuo *ItemUpdateOne) sqlSave(ctx context.Context) (_node *Item, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := iuo.mutation.ReceiptIDs(); len(nodes) > 0 {
+	if nodes := iuo.mutation.ReceiptsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   item.ReceiptTable,
-			Columns: []string{item.ReceiptColumn},
+			Table:   item.ReceiptsTable,
+			Columns: []string{item.ReceiptsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(receipt.FieldID, field.TypeInt),

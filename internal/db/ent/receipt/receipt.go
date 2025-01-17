@@ -20,15 +20,17 @@ const (
 	FieldPurchaseTime = "purchase_time"
 	// FieldTotal holds the string denoting the total field in the database.
 	FieldTotal = "total"
+	// FieldPoints holds the string denoting the points field in the database.
+	FieldPoints = "points"
 	// EdgeItems holds the string denoting the items edge name in mutations.
 	EdgeItems = "items"
 	// Table holds the table name of the receipt in the database.
-	Table = "receipt"
+	Table = "receipts"
 	// ItemsTable is the table that holds the items relation/edge.
-	ItemsTable = "item"
+	ItemsTable = "items"
 	// ItemsInverseTable is the table name for the Item entity.
 	// It exists in this package in order to avoid circular dependency with the "item" package.
-	ItemsInverseTable = "item"
+	ItemsInverseTable = "items"
 	// ItemsColumn is the table column denoting the items relation/edge.
 	ItemsColumn = "receipt_items"
 )
@@ -40,6 +42,7 @@ var Columns = []string{
 	FieldPurchaseDate,
 	FieldPurchaseTime,
 	FieldTotal,
+	FieldPoints,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -60,7 +63,9 @@ var (
 	// PurchaseTimeValidator is a validator for the "purchase_time" field. It is called by the builders before save.
 	PurchaseTimeValidator func(string) error
 	// TotalValidator is a validator for the "total" field. It is called by the builders before save.
-	TotalValidator func(string) error
+	TotalValidator func(int) error
+	// DefaultPoints holds the default value on creation for the "points" field.
+	DefaultPoints int
 )
 
 // OrderOption defines the ordering options for the Receipt queries.
@@ -89,6 +94,11 @@ func ByPurchaseTime(opts ...sql.OrderTermOption) OrderOption {
 // ByTotal orders the results by the total field.
 func ByTotal(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTotal, opts...).ToFunc()
+}
+
+// ByPoints orders the results by the points field.
+func ByPoints(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPoints, opts...).ToFunc()
 }
 
 // ByItemsCount orders the results by items count.

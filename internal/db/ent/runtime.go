@@ -21,7 +21,7 @@ func init() {
 	// itemDescPrice is the schema descriptor for price field.
 	itemDescPrice := itemFields[1].Descriptor()
 	// item.PriceValidator is a validator for the "price" field. It is called by the builders before save.
-	item.PriceValidator = itemDescPrice.Validators[0].(func(string) error)
+	item.PriceValidator = itemDescPrice.Validators[0].(func(int) error)
 	receiptFields := schema.Receipt{}.Fields()
 	_ = receiptFields
 	// receiptDescRetailer is the schema descriptor for retailer field.
@@ -39,5 +39,9 @@ func init() {
 	// receiptDescTotal is the schema descriptor for total field.
 	receiptDescTotal := receiptFields[3].Descriptor()
 	// receipt.TotalValidator is a validator for the "total" field. It is called by the builders before save.
-	receipt.TotalValidator = receiptDescTotal.Validators[0].(func(string) error)
+	receipt.TotalValidator = receiptDescTotal.Validators[0].(func(int) error)
+	// receiptDescPoints is the schema descriptor for points field.
+	receiptDescPoints := receiptFields[4].Descriptor()
+	// receipt.DefaultPoints holds the default value on creation for the points field.
+	receipt.DefaultPoints = receiptDescPoints.Default.(int)
 }

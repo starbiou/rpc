@@ -27,28 +27,28 @@ func (ic *ItemCreate) SetShortDescription(s string) *ItemCreate {
 }
 
 // SetPrice sets the "price" field.
-func (ic *ItemCreate) SetPrice(s string) *ItemCreate {
-	ic.mutation.SetPrice(s)
+func (ic *ItemCreate) SetPrice(i int) *ItemCreate {
+	ic.mutation.SetPrice(i)
 	return ic
 }
 
-// SetReceiptID sets the "receipt" edge to the Receipt entity by ID.
-func (ic *ItemCreate) SetReceiptID(id int) *ItemCreate {
-	ic.mutation.SetReceiptID(id)
+// SetReceiptsID sets the "receipts" edge to the Receipt entity by ID.
+func (ic *ItemCreate) SetReceiptsID(id int) *ItemCreate {
+	ic.mutation.SetReceiptsID(id)
 	return ic
 }
 
-// SetNillableReceiptID sets the "receipt" edge to the Receipt entity by ID if the given value is not nil.
-func (ic *ItemCreate) SetNillableReceiptID(id *int) *ItemCreate {
+// SetNillableReceiptsID sets the "receipts" edge to the Receipt entity by ID if the given value is not nil.
+func (ic *ItemCreate) SetNillableReceiptsID(id *int) *ItemCreate {
 	if id != nil {
-		ic = ic.SetReceiptID(*id)
+		ic = ic.SetReceiptsID(*id)
 	}
 	return ic
 }
 
-// SetReceipt sets the "receipt" edge to the Receipt entity.
-func (ic *ItemCreate) SetReceipt(r *Receipt) *ItemCreate {
-	return ic.SetReceiptID(r.ID)
+// SetReceipts sets the "receipts" edge to the Receipt entity.
+func (ic *ItemCreate) SetReceipts(r *Receipt) *ItemCreate {
+	return ic.SetReceiptsID(r.ID)
 }
 
 // Mutation returns the ItemMutation object of the builder.
@@ -132,15 +132,15 @@ func (ic *ItemCreate) createSpec() (*Item, *sqlgraph.CreateSpec) {
 		_node.ShortDescription = value
 	}
 	if value, ok := ic.mutation.Price(); ok {
-		_spec.SetField(item.FieldPrice, field.TypeString, value)
+		_spec.SetField(item.FieldPrice, field.TypeInt, value)
 		_node.Price = value
 	}
-	if nodes := ic.mutation.ReceiptIDs(); len(nodes) > 0 {
+	if nodes := ic.mutation.ReceiptsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   item.ReceiptTable,
-			Columns: []string{item.ReceiptColumn},
+			Table:   item.ReceiptsTable,
+			Columns: []string{item.ReceiptsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(receipt.FieldID, field.TypeInt),
