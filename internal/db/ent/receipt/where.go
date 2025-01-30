@@ -70,8 +70,13 @@ func PurchaseTime(v string) predicate.Receipt {
 }
 
 // Total applies equality check predicate on the "total" field. It's identical to TotalEQ.
-func Total(v string) predicate.Receipt {
+func Total(v int) predicate.Receipt {
 	return predicate.Receipt(sql.FieldEQ(FieldTotal, v))
+}
+
+// Points applies equality check predicate on the "points" field. It's identical to PointsEQ.
+func Points(v int) predicate.Receipt {
+	return predicate.Receipt(sql.FieldEQ(FieldPoints, v))
 }
 
 // RetailerEQ applies the EQ predicate on the "retailer" field.
@@ -270,68 +275,83 @@ func PurchaseTimeContainsFold(v string) predicate.Receipt {
 }
 
 // TotalEQ applies the EQ predicate on the "total" field.
-func TotalEQ(v string) predicate.Receipt {
+func TotalEQ(v int) predicate.Receipt {
 	return predicate.Receipt(sql.FieldEQ(FieldTotal, v))
 }
 
 // TotalNEQ applies the NEQ predicate on the "total" field.
-func TotalNEQ(v string) predicate.Receipt {
+func TotalNEQ(v int) predicate.Receipt {
 	return predicate.Receipt(sql.FieldNEQ(FieldTotal, v))
 }
 
 // TotalIn applies the In predicate on the "total" field.
-func TotalIn(vs ...string) predicate.Receipt {
+func TotalIn(vs ...int) predicate.Receipt {
 	return predicate.Receipt(sql.FieldIn(FieldTotal, vs...))
 }
 
 // TotalNotIn applies the NotIn predicate on the "total" field.
-func TotalNotIn(vs ...string) predicate.Receipt {
+func TotalNotIn(vs ...int) predicate.Receipt {
 	return predicate.Receipt(sql.FieldNotIn(FieldTotal, vs...))
 }
 
 // TotalGT applies the GT predicate on the "total" field.
-func TotalGT(v string) predicate.Receipt {
+func TotalGT(v int) predicate.Receipt {
 	return predicate.Receipt(sql.FieldGT(FieldTotal, v))
 }
 
 // TotalGTE applies the GTE predicate on the "total" field.
-func TotalGTE(v string) predicate.Receipt {
+func TotalGTE(v int) predicate.Receipt {
 	return predicate.Receipt(sql.FieldGTE(FieldTotal, v))
 }
 
 // TotalLT applies the LT predicate on the "total" field.
-func TotalLT(v string) predicate.Receipt {
+func TotalLT(v int) predicate.Receipt {
 	return predicate.Receipt(sql.FieldLT(FieldTotal, v))
 }
 
 // TotalLTE applies the LTE predicate on the "total" field.
-func TotalLTE(v string) predicate.Receipt {
+func TotalLTE(v int) predicate.Receipt {
 	return predicate.Receipt(sql.FieldLTE(FieldTotal, v))
 }
 
-// TotalContains applies the Contains predicate on the "total" field.
-func TotalContains(v string) predicate.Receipt {
-	return predicate.Receipt(sql.FieldContains(FieldTotal, v))
+// PointsEQ applies the EQ predicate on the "points" field.
+func PointsEQ(v int) predicate.Receipt {
+	return predicate.Receipt(sql.FieldEQ(FieldPoints, v))
 }
 
-// TotalHasPrefix applies the HasPrefix predicate on the "total" field.
-func TotalHasPrefix(v string) predicate.Receipt {
-	return predicate.Receipt(sql.FieldHasPrefix(FieldTotal, v))
+// PointsNEQ applies the NEQ predicate on the "points" field.
+func PointsNEQ(v int) predicate.Receipt {
+	return predicate.Receipt(sql.FieldNEQ(FieldPoints, v))
 }
 
-// TotalHasSuffix applies the HasSuffix predicate on the "total" field.
-func TotalHasSuffix(v string) predicate.Receipt {
-	return predicate.Receipt(sql.FieldHasSuffix(FieldTotal, v))
+// PointsIn applies the In predicate on the "points" field.
+func PointsIn(vs ...int) predicate.Receipt {
+	return predicate.Receipt(sql.FieldIn(FieldPoints, vs...))
 }
 
-// TotalEqualFold applies the EqualFold predicate on the "total" field.
-func TotalEqualFold(v string) predicate.Receipt {
-	return predicate.Receipt(sql.FieldEqualFold(FieldTotal, v))
+// PointsNotIn applies the NotIn predicate on the "points" field.
+func PointsNotIn(vs ...int) predicate.Receipt {
+	return predicate.Receipt(sql.FieldNotIn(FieldPoints, vs...))
 }
 
-// TotalContainsFold applies the ContainsFold predicate on the "total" field.
-func TotalContainsFold(v string) predicate.Receipt {
-	return predicate.Receipt(sql.FieldContainsFold(FieldTotal, v))
+// PointsGT applies the GT predicate on the "points" field.
+func PointsGT(v int) predicate.Receipt {
+	return predicate.Receipt(sql.FieldGT(FieldPoints, v))
+}
+
+// PointsGTE applies the GTE predicate on the "points" field.
+func PointsGTE(v int) predicate.Receipt {
+	return predicate.Receipt(sql.FieldGTE(FieldPoints, v))
+}
+
+// PointsLT applies the LT predicate on the "points" field.
+func PointsLT(v int) predicate.Receipt {
+	return predicate.Receipt(sql.FieldLT(FieldPoints, v))
+}
+
+// PointsLTE applies the LTE predicate on the "points" field.
+func PointsLTE(v int) predicate.Receipt {
+	return predicate.Receipt(sql.FieldLTE(FieldPoints, v))
 }
 
 // HasItems applies the HasEdge predicate on the "items" edge.

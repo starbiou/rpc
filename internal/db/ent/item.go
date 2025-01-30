@@ -20,7 +20,7 @@ type Item struct {
 	// ShortDescription holds the value of the "short_description" field.
 	ShortDescription string `json:"short_description,omitempty"`
 	// Price holds the value of the "price" field.
-	Price string `json:"price,omitempty"`
+	Price int `json:"price,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ItemQuery when eager-loading is set.
 	Edges         ItemEdges `json:"edges"`
@@ -30,22 +30,22 @@ type Item struct {
 
 // ItemEdges holds the relations/edges for other nodes in the graph.
 type ItemEdges struct {
-	// Receipt holds the value of the receipt edge.
-	Receipt *Receipt `json:"receipt,omitempty"`
+	// Receipts holds the value of the receipts edge.
+	Receipts *Receipt `json:"receipts,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
-// ReceiptOrErr returns the Receipt value or an error if the edge
+// ReceiptsOrErr returns the Receipts value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e ItemEdges) ReceiptOrErr() (*Receipt, error) {
-	if e.Receipt != nil {
-		return e.Receipt, nil
+func (e ItemEdges) ReceiptsOrErr() (*Receipt, error) {
+	if e.Receipts != nil {
+		return e.Receipts, nil
 	} else if e.loadedTypes[0] {
 		return nil, &NotFoundError{label: receipt.Label}
 	}
-	return nil, &NotLoadedError{edge: "receipt"}
+	return nil, &NotLoadedError{edge: "receipts"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -53,9 +53,9 @@ func (*Item) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case item.FieldID:
+		case item.FieldID, item.FieldPrice:
 			values[i] = new(sql.NullInt64)
-		case item.FieldShortDescription, item.FieldPrice:
+		case item.FieldShortDescription:
 			values[i] = new(sql.NullString)
 		case item.ForeignKeys[0]: // receipt_items
 			values[i] = new(sql.NullInt64)
@@ -87,10 +87,10 @@ func (i *Item) assignValues(columns []string, values []any) error {
 				i.ShortDescription = value.String
 			}
 		case item.FieldPrice:
-			if value, ok := values[j].(*sql.NullString); !ok {
+			if value, ok := values[j].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field price", values[j])
 			} else if value.Valid {
-				i.Price = value.String
+				i.Price = int(value.Int64)
 			}
 		case item.ForeignKeys[0]:
 			if value, ok := values[j].(*sql.NullInt64); !ok {
@@ -112,9 +112,9 @@ func (i *Item) Value(name string) (ent.Value, error) {
 	return i.selectValues.Get(name)
 }
 
-// QueryReceipt queries the "receipt" edge of the Item entity.
-func (i *Item) QueryReceipt() *ReceiptQuery {
-	return NewItemClient(i.config).QueryReceipt(i)
+// QueryReceipts queries the "receipts" edge of the Item entity.
+func (i *Item) QueryReceipts() *ReceiptQuery {
+	return NewItemClient(i.config).QueryReceipts(i)
 }
 
 // Update returns a builder for updating this Item.
@@ -144,7 +144,7 @@ func (i *Item) String() string {
 	builder.WriteString(i.ShortDescription)
 	builder.WriteString(", ")
 	builder.WriteString("price=")
-	builder.WriteString(i.Price)
+	builder.WriteString(fmt.Sprintf("%v", i.Price))
 	builder.WriteByte(')')
 	return builder.String()
 }

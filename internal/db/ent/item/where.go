@@ -60,7 +60,7 @@ func ShortDescription(v string) predicate.Item {
 }
 
 // Price applies equality check predicate on the "price" field. It's identical to PriceEQ.
-func Price(v string) predicate.Item {
+func Price(v int) predicate.Item {
 	return predicate.Item(sql.FieldEQ(FieldPrice, v))
 }
 
@@ -130,85 +130,60 @@ func ShortDescriptionContainsFold(v string) predicate.Item {
 }
 
 // PriceEQ applies the EQ predicate on the "price" field.
-func PriceEQ(v string) predicate.Item {
+func PriceEQ(v int) predicate.Item {
 	return predicate.Item(sql.FieldEQ(FieldPrice, v))
 }
 
 // PriceNEQ applies the NEQ predicate on the "price" field.
-func PriceNEQ(v string) predicate.Item {
+func PriceNEQ(v int) predicate.Item {
 	return predicate.Item(sql.FieldNEQ(FieldPrice, v))
 }
 
 // PriceIn applies the In predicate on the "price" field.
-func PriceIn(vs ...string) predicate.Item {
+func PriceIn(vs ...int) predicate.Item {
 	return predicate.Item(sql.FieldIn(FieldPrice, vs...))
 }
 
 // PriceNotIn applies the NotIn predicate on the "price" field.
-func PriceNotIn(vs ...string) predicate.Item {
+func PriceNotIn(vs ...int) predicate.Item {
 	return predicate.Item(sql.FieldNotIn(FieldPrice, vs...))
 }
 
 // PriceGT applies the GT predicate on the "price" field.
-func PriceGT(v string) predicate.Item {
+func PriceGT(v int) predicate.Item {
 	return predicate.Item(sql.FieldGT(FieldPrice, v))
 }
 
 // PriceGTE applies the GTE predicate on the "price" field.
-func PriceGTE(v string) predicate.Item {
+func PriceGTE(v int) predicate.Item {
 	return predicate.Item(sql.FieldGTE(FieldPrice, v))
 }
 
 // PriceLT applies the LT predicate on the "price" field.
-func PriceLT(v string) predicate.Item {
+func PriceLT(v int) predicate.Item {
 	return predicate.Item(sql.FieldLT(FieldPrice, v))
 }
 
 // PriceLTE applies the LTE predicate on the "price" field.
-func PriceLTE(v string) predicate.Item {
+func PriceLTE(v int) predicate.Item {
 	return predicate.Item(sql.FieldLTE(FieldPrice, v))
 }
 
-// PriceContains applies the Contains predicate on the "price" field.
-func PriceContains(v string) predicate.Item {
-	return predicate.Item(sql.FieldContains(FieldPrice, v))
-}
-
-// PriceHasPrefix applies the HasPrefix predicate on the "price" field.
-func PriceHasPrefix(v string) predicate.Item {
-	return predicate.Item(sql.FieldHasPrefix(FieldPrice, v))
-}
-
-// PriceHasSuffix applies the HasSuffix predicate on the "price" field.
-func PriceHasSuffix(v string) predicate.Item {
-	return predicate.Item(sql.FieldHasSuffix(FieldPrice, v))
-}
-
-// PriceEqualFold applies the EqualFold predicate on the "price" field.
-func PriceEqualFold(v string) predicate.Item {
-	return predicate.Item(sql.FieldEqualFold(FieldPrice, v))
-}
-
-// PriceContainsFold applies the ContainsFold predicate on the "price" field.
-func PriceContainsFold(v string) predicate.Item {
-	return predicate.Item(sql.FieldContainsFold(FieldPrice, v))
-}
-
-// HasReceipt applies the HasEdge predicate on the "receipt" edge.
-func HasReceipt() predicate.Item {
+// HasReceipts applies the HasEdge predicate on the "receipts" edge.
+func HasReceipts() predicate.Item {
 	return predicate.Item(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, ReceiptTable, ReceiptColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, ReceiptsTable, ReceiptsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasReceiptWith applies the HasEdge predicate on the "receipt" edge with a given conditions (other predicates).
-func HasReceiptWith(preds ...predicate.Receipt) predicate.Item {
+// HasReceiptsWith applies the HasEdge predicate on the "receipts" edge with a given conditions (other predicates).
+func HasReceiptsWith(preds ...predicate.Receipt) predicate.Item {
 	return predicate.Item(func(s *sql.Selector) {
-		step := newReceiptStep()
+		step := newReceiptsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

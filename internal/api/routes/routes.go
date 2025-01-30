@@ -3,7 +3,16 @@ package routes
 import (
 	"billing/internal/db/ent"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"os"
 )
+
+// RouteConfig holds the configuration for route setup
+type RouteConfig struct {
+	Router    *gin.Engine
+	Client    *ent.Client
+	Validator *validator.Validate
+}
 
 func SetupRoutes(client *ent.Client) *gin.Engine {
 	router := gin.Default()
@@ -18,8 +27,17 @@ func SetupRoutes(client *ent.Client) *gin.Engine {
 		}
 		c.Next()
 	})
+	router.Use(gin.LoggerWithWriter(os.Stdout)) // logging middleware
+	router.Use(gin.Recovery())                  // Recovery middleware for panic handling
+	validate := validator.New()
 
-	SetupReceiptRoutes(router, client)
+	config := RouteConfig{
+		Router:    router,
+		Client:    client,
+		Validator: validate,
+	}
+
+	SetupReceiptRoutes(config)
 
 	return router
 }

@@ -18,15 +18,15 @@ func (Item) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("short_description").
 			NotEmpty(),
-		field.String("price").
-			NotEmpty(),
+		field.Int("price").
+			NonNegative(),
 	}
 }
 
 // Edges of the Item.
 func (Item) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("receipt", Receipt.Type).
+		edge.From("receipts", Receipt.Type).
 			Ref("items").
 			Unique(),
 	}
