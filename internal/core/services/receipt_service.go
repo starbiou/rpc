@@ -5,6 +5,8 @@ import (
 	"billing/internal/db/repositories"
 	"context"
 	"fmt"
+	"log"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,96 +14,78 @@ import (
 )
 
 const (
-	// RetailerNamePointsMultiplier is the multiplier for points based on retailer name characters.
-	RetailerNamePointsMultiplier = 1
-	// RoundDollarPoints is the points awarded for a round dollar total.
-	RoundDollarPoints = 50
-	// MultipleOfQuarterPoints is the points awarded if the total is a multiple of 0.25.
-	MultipleOfQuarterPoints = 25
-	// TwoItemsPoints is the points awarded for every two items on the receipt.
-	TwoItemsPoints = 5
-	// DescriptionLengthMultiplier is the multiplier for points based on item description length.
-	DescriptionLengthMultiplier = 0.2
-	// OddDayPoints is the points awarded if the purchase day is odd.
-	OddDayPoints = 6
-	// AfternoonPurchasePoints is the points awarded if the purchase time is between 2:00pm and 4:00pm.
-	AfternoonPurchasePoints = 10
+	RetailerNamePointsMultiplier = 1   // Multiplier for points based on retailer name characters
+	RoundDollarPoints            = 50  // Points awarded for a round dollar total
+	MultipleOfQuarterPoints      = 25  // Points awarded if the total is a multiple of 0.25
+	TwoItemsPoints               = 5   // Points awarded for every two items on the receipt
+	DescriptionLengthMultiplier  = 0.2 // Multiplier for points based on item description length
+	OddDayPoints                 = 6   // Points awarded if the purchase day is odd
+	AfternoonPurchasePoints      = 10  // Points awarded if the purchase time is between 2:00pm and 4:00pm
 )
+
+// ReceiptServicer defines the interface for receipt processing operations
+type ReceiptServicer interface {
+	AddReceipt(ctx context.Context, receipt ent.Receipt) (string, error)
+	GetReceiptPoints(ctx context.Context, id int) (int, error)
+}
 
 // ReceiptService provides methods to process receipts and calculate points.
 type ReceiptService struct {
-	client *ent.Client
-	repo   repositories.ReceiptRepository
+	client      *ent.Client
+	receiptRepo repositories.ReceiptRepository
 }
 
 // NewReceiptService creates a new instance of ReceiptService with the given repository.
-func NewReceiptService(client *ent.Client, repo repositories.ReceiptRepository) *ReceiptService {
-	return &ReceiptService{client: client, repo: repo}
+func NewReceiptService(client *ent.Client, receiptRepo repositories.ReceiptRepository) *ReceiptService {
+	return &ReceiptService{client: client, receiptRepo: receiptRepo}
 }
 
-// AddReceipt adds a new receipt to the repository and returns its ID.
+// AddReceipt adds a new receipt, calculates points, and returns its ID.
 func (s *ReceiptService) AddReceipt(ctx context.Context, receipt ent.Receipt) (string, error) {
-	createdReceipt, err := s.repo.CreateReceipt(ctx, &receipt)
+	points := s.calculatePoints(&receipt)
+	receipt.Points = points
+	fmt.Println("receipt ", receipt)
+
+	createdReceipt, err := s.receiptRepo.CreateReceiptWithItems(ctx, &receipt, receipt.Edges.Items)
 	if err != nil {
 		return "", err
 	}
+
 	return strconv.Itoa(createdReceipt.ID), nil
 }
 
-// GetReceiptPoints retrieves a receipt by ID and calculates the points awarded.
-func (s *ReceiptService) GetReceiptPoints(ctx context.Context, id string) (int, error) {
-	receiptID, err := strconv.Atoi(id)
-	if err != nil {
-		return 0, err
+// GetReceiptPoints retrieves the points for a receipt from the database.
+func (s *ReceiptService) GetReceiptPoints(ctx context.Context, id int) (int, error) {
+	receipt, err := s.receiptRepo.GetReceiptByID(ctx, id)
+	if err != nil || receipt == nil {
+		return 0, fmt.Errorf("receipt not found")
 	}
-
-	receipt, err := s.repo.GetReceiptByID(ctx, receiptID)
-	if err != nil {
-		return 0, err
-	}
-	return s.CalculatePoints(receipt), nil
+	return receipt.Points, nil
 }
 
-func parseTotal(totalStr string) (float64, error) {
-	total, err := strconv.ParseFloat(totalStr, 64)
-	if err != nil {
-		return 0, fmt.Errorf("invalid total value: %v", err)
-	}
-	return total, nil
-}
-
-// CalculatePoints calculates the total points for a given receipt based on various rules.
-func (s *ReceiptService) CalculatePoints(receipt *ent.Receipt) int {
+// calculatePoints calculates the total points for a given receipt based on various rules.
+func (s *ReceiptService) calculatePoints(receipt *ent.Receipt) int {
 	points := 0
-	points += s.calculateRetailerNamePoints(receipt.Retailer)
-
-	total, err := parseTotal(receipt.Total)
-	if err == nil {
-		points += s.calculateTotalPoints(total)
-	} else {
-		// Handle the error, e.g., log it or return a default value
-	}
-
-	points += s.calculateItemPoints(receipt.Edges.Items)
-	points += s.calculateDatePoints(receipt.PurchaseDate)
-	points += s.calculateTimePoints(receipt.PurchaseTime)
+	points += s.calculateRetailerNamePoints(receipt.Retailer) // Rule 1: One point per alphanumeric character
+	points += s.calculateTotalPoints(receipt.Total)           // Rules 2 & 3: Round dollar and quarter multiples
+	points += s.calculateItemPoints(receipt.Edges.Items)      // Rules 4 & 5: Pairs of items and description length
+	points += s.calculateDatePoints(receipt.PurchaseDate)     // Rule 6: Odd day bonus
+	points += s.calculateTimePoints(receipt.PurchaseTime)     // Rule 7: Afternoon bonus
 	return points
 }
 
-// Rule 1: Retailer name points
 // calculateRetailerNamePoints calculates points based on the number of alphanumeric characters in the retailer's name.
 func (s *ReceiptService) calculateRetailerNamePoints(retailer string) int {
-	re := regexp.MustCompile(`[a-zA-Z0-9]`)
-	return len(re.FindAllString(retailer, -1)) * RetailerNamePointsMultiplier
+	return len(regexp.MustCompile(`[a-zA-Z0-9]`).FindAllString(retailer, -1)) * RetailerNamePointsMultiplier
 }
 
 // calculateTotalPoints calculates points based on the total amount of the receipt.
-func (s *ReceiptService) calculateTotalPoints(total float64) int {
+func (s *ReceiptService) calculateTotalPoints(total int) int {
 	points := 0
-	if total == float64(int(total)) { // Rule 2: Round dollar amount
+	if total%100 == 0 {
 		points += RoundDollarPoints
 	}
-	if int(total*100)%25 == 0 { // Rule 3: Multiple of 0.25
+	if total%25 == 0 {
 		points += MultipleOfQuarterPoints
 	}
 	return points
@@ -111,21 +95,19 @@ func (s *ReceiptService) calculateTotalPoints(total float64) int {
 func (s *ReceiptService) calculateItemPoints(items []*ent.Item) int {
 	points := (len(items) / 2) * TwoItemsPoints
 	for _, item := range items {
-		if len(strings.TrimSpace(item.ShortDescription))%3 == 0 { // Rule 4: Every two items
-			priceFloat, err := strconv.ParseFloat(item.Price, 64)
-			if err == nil {
-				points += int(priceFloat*DescriptionLengthMultiplier + 0.5) // Rule 5: Description length multiple of 3
-			}
+		if len(strings.TrimSpace(item.ShortDescription))%3 == 0 {
+			priceInDollars := float64(item.Price) / 100.0
+			points += int(math.Ceil(priceInDollars * DescriptionLengthMultiplier))
 		}
 	}
 	return points
 }
 
-// Rule 6: Odd day
 // calculateDatePoints calculates points based on the purchase date.
 func (s *ReceiptService) calculateDatePoints(date string) int {
 	parsedDate, err := time.Parse("2006-01-02", date)
 	if err != nil {
+		log.Printf("Invalid date format: %v", err)
 		return 0
 	}
 	if parsedDate.Day()%2 != 0 {
@@ -134,11 +116,11 @@ func (s *ReceiptService) calculateDatePoints(date string) int {
 	return 0
 }
 
-// Rule 7: Time between 2:00pm and 4:00pm
 // calculateTimePoints calculates points based on the purchase time.
 func (s *ReceiptService) calculateTimePoints(timeStr string) int {
 	hour, err := strconv.Atoi(strings.Split(timeStr, ":")[0])
 	if err != nil {
+		log.Printf("Invalid time format: %v", err)
 		return 0
 	}
 	if hour >= 14 && hour < 16 {

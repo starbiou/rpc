@@ -23,7 +23,9 @@ type Receipt struct {
 	// PurchaseTime holds the value of the "purchase_time" field.
 	PurchaseTime string `json:"purchase_time,omitempty"`
 	// Total holds the value of the "total" field.
-	Total string `json:"total,omitempty"`
+	Total int `json:"total,omitempty"`
+	// Points holds the value of the "points" field.
+	Points int `json:"points,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ReceiptQuery when eager-loading is set.
 	Edges        ReceiptEdges `json:"edges"`
@@ -53,9 +55,9 @@ func (*Receipt) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case receipt.FieldID:
+		case receipt.FieldID, receipt.FieldTotal, receipt.FieldPoints:
 			values[i] = new(sql.NullInt64)
-		case receipt.FieldRetailer, receipt.FieldPurchaseDate, receipt.FieldPurchaseTime, receipt.FieldTotal:
+		case receipt.FieldRetailer, receipt.FieldPurchaseDate, receipt.FieldPurchaseTime:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -97,10 +99,16 @@ func (r *Receipt) assignValues(columns []string, values []any) error {
 				r.PurchaseTime = value.String
 			}
 		case receipt.FieldTotal:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field total", values[i])
 			} else if value.Valid {
-				r.Total = value.String
+				r.Total = int(value.Int64)
+			}
+		case receipt.FieldPoints:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field points", values[i])
+			} else if value.Valid {
+				r.Points = int(value.Int64)
 			}
 		default:
 			r.selectValues.Set(columns[i], values[i])
@@ -153,7 +161,10 @@ func (r *Receipt) String() string {
 	builder.WriteString(r.PurchaseTime)
 	builder.WriteString(", ")
 	builder.WriteString("total=")
-	builder.WriteString(r.Total)
+	builder.WriteString(fmt.Sprintf("%v", r.Total))
+	builder.WriteString(", ")
+	builder.WriteString("points=")
+	builder.WriteString(fmt.Sprintf("%v", r.Points))
 	builder.WriteByte(')')
 	return builder.String()
 }

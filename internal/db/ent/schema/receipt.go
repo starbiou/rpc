@@ -22,8 +22,10 @@ func (Receipt) Fields() []ent.Field {
 			NotEmpty(),
 		field.String("purchase_time").
 			NotEmpty(),
-		field.String("total").
-			NotEmpty(),
+		field.Int("total").
+			NonNegative(),
+		field.Int("points").
+			Default(0),
 	}
 }
 

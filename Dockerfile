@@ -1,4 +1,4 @@
-FROM golang:latest  AS builder
+FROM golang:1.23.5-alpine  AS builder
 
 WORKDIR /build
 
@@ -11,7 +11,7 @@ COPY . ./
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o /build/main cmd/server/main.go
 
 # Final stage
-FROM golang:alpine
+FROM golang:1.23.5-alpine
 
 COPY --from=builder /build/main .
 

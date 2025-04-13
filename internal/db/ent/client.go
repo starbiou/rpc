@@ -316,15 +316,15 @@ func (c *ItemClient) GetX(ctx context.Context, id int) *Item {
 	return obj
 }
 
-// QueryReceipt queries the receipt edge of a Item.
-func (c *ItemClient) QueryReceipt(i *Item) *ReceiptQuery {
+// QueryReceipts queries the receipts edge of a Item.
+func (c *ItemClient) QueryReceipts(i *Item) *ReceiptQuery {
 	query := (&ReceiptClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := i.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(item.Table, item.FieldID, id),
 			sqlgraph.To(receipt.Table, receipt.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, item.ReceiptTable, item.ReceiptColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, item.ReceiptsTable, item.ReceiptsColumn),
 		)
 		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
 		return fromV, nil
